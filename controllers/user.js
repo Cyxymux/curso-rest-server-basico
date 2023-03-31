@@ -1,19 +1,52 @@
 const {response} = require('express');
+const Usuario = require('../models/user');
+const {encriptarPassword} = require('../helpers/db-validators');
 
-const usuariosGet = (req, res = response) =>{
-    res.json({msg:'get Hello World'});
-  }
-const usuariosPut = (req, res = response) =>{
-    const data = req.params.id;
-    res.json({msg:'Put Hello World', data});
-  }
-const usuariosPost = (req, res = response) =>{
 
-    const data = req.body
-    res.json({msg:'Post Hello World',"data": data});
+
+const usuariosGet = async (req, res) =>{
+  const {limite = 5} = req.body;
+  /*const usuarios = await Usuario.find()
+  .limit(limite);
+
+  const total = await Usuario.countDocuments();
+    res.json({usuarios, total});
+  */
+
+  const [usuarios, total] = await Promise.all([
+    Usuario.find()
+  .limit(limite),
+  Usuario.countDocuments()
+  ]);
+  res.json({total, usuarios});
+}
+const usuariosPut = async (req, res = response) =>{
+    const{password, correo, google,... resto} = req.body;
+    /*if(password){
+        password = encriptarPassword(password);
+    }*/
+
+    const usuario = await Usuario.findByIdAndUpdate(resto._id, resto);
+
+    res.json({msg:'Put Hello World', usuario});
   }
-const usuariosPatch = (req, res = response) =>{
-    res.json({msg:'Patch Hello World'});
+
+const usuariosPost = async (req, res = response) =>{
+  
+  const {nombre, password, correo, rol} = req.body
+    const usuario = new Usuario({nombre, password, correo, rol});
+    
+   
+
+    await usuario.save();
+    res.json({msg:'Post Hello World', usuario});
+  }
+const usuariosDelete = async (req, res = response) =>{
+  const {_id} = req.body;
+
+  //const usuario = await Usuario.findByIdAndDelete(_id);
+  const usuario = await Usuario.findByIdAndUpdate(_id, {estado: true});
+    res.json(usuario);
   }
 
 
@@ -21,5 +54,5 @@ const usuariosPatch = (req, res = response) =>{
     usuariosGet,
     usuariosPut,
     usuariosPost,
-    usuariosPatch
+    usuariosDelete
   }
